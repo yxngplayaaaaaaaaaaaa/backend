@@ -1,10 +1,10 @@
 export default function handler(req, res) {
-const allowedReferers = ["linkvertise.com", "link-target.net"];
-const refererValid = allowedReferers.some(r => referer.includes(r));
+    const referer = req.headers.referer || "";
+    const allowedDomains = ["linkvertise.com", "link-target.net"];
 
-    const refererValid = allowedReferers.some(r => referer.includes(r));
-    if (!refererValid) {
-        return res.status(403).json({ error: "Unauthorized access. Please complete Linkvertise." });
+    const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
+    if (!isAuthorized) {
+        return res.status(403).json({ error: "Unauthorized access. Complete Linkvertise to get a key." });
     }
 
     const { clientid } = req.query;
@@ -16,7 +16,7 @@ const refererValid = allowedReferers.some(r => referer.includes(r));
 
     const encrypted = xorEncrypt("whitelisted", process.env.SECRET_KEY || "phaze830630");
 
-    res.status(200).json({ key: encodedKey, encrypted });
+    return res.status(200).json({ key: encodedKey, encrypted });
 }
 
 function xorEncrypt(data, key) {
