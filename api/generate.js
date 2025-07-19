@@ -1,6 +1,6 @@
 export default function handler(req, res) {
     const referer = req.headers.referer || "";
-    const allowedDomains = ["linkvertise.com", "link-target.net"];
+    const allowedDomains = ["linkvertise.com/1372272/6gAQ9ejg9IDz?o=sharing", "https://linkvertise.com/1372272/6gAQ9ejg9IDz?o"];
 
     const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
     if (!isAuthorized) {
