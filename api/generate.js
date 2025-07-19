@@ -1,6 +1,6 @@
 export default function handler(req, res) {
     const referer = req.headers.referer || "";
-    const allowedReferers = ["https://link-target.net/1372272/6gAQ9ejg9IDz"];
+    const allowedReferers = ["https://link-target.net/"];
 
     const refererValid = allowedReferers.some(r => referer.includes(r));
     if (!refererValid) {
