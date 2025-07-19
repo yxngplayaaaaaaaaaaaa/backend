@@ -1,30 +1,28 @@
-import fs from 'fs';
-import path from 'path';
-
 export default function handler(req, res) {
     const { key } = req.query;
     if (!key) return res.status(400).json({ error: "Missing key" });
 
-    const filePath = path.resolve("./keys.json");
-
-    let keys = {};
-    if (fs.existsSync(filePath)) {
-        keys = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    let decoded = "";
+    try {
+        decoded = Buffer.from(key, "base64").toString("utf-8");
+    } catch (e) {
+        return res.status(400).json({ valid: false, error: "Invalid base64" });
     }
 
-    const savedTime = keys[key];
-    const currentTime = Date.now();
-    const fourHours = 1000 * 60 * 60 * 4;
+    const parts = decoded.split(":");
+    if (parts.length !== 2) return res.status(400).json({ valid: false, error: "Malformed key" });
 
-    let valid = false;
-    if (savedTime && (currentTime - savedTime) <= fourHours) {
-        valid = true;
-    }
+    const timestamp = parseInt(parts[1]);
+    const now = Date.now();
+    const ageMs = now - timestamp;
+    const fourHoursMs = 1000 * 60 * 60 * 4;
 
-    const result = valid ? "whitelisted" : "notwhitelisted";
-    const encrypted = xorEncrypt(result, process.env.SECRET_KEY || "phaze830630");
+    const isValid = ageMs <= fourHoursMs;
 
-    res.status(200).json({ valid, encrypted });
+    const result = isValid ? "whitelisted" : "notwhitelisted";
+    const encrypted = xorEncrypt(result, process.env.SECRET_KEY || "velocity2025");
+
+    res.status(200).json({ valid: isValid, encrypted });
 }
 
 function xorEncrypt(data, key) {
