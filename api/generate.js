@@ -1,4 +1,12 @@
 export default function handler(req, res) {
+    const referer = req.headers.referer || "";
+    const allowedReferers = ["phazekey.vercel.app"];
+
+    const refererValid = allowedReferers.some(r => referer.includes(r));
+    if (!refererValid) {
+        return res.status(403).json({ error: "Unauthorized access. Complete Linkvertise to get a key." });
+    }
+
     const { clientid } = req.query;
     if (!clientid) return res.status(400).json({ error: "Missing clientid" });
 
