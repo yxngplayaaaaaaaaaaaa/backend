@@ -6,7 +6,7 @@ export default function handler(req, res) {
     const rawKey = `${clientid}:${now}`;
     const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    const encrypted = xorEncrypt("whitelisted", process.env.SECRET_KEY || "velocity2025");
+    const encrypted = xorEncrypt("whitelisted", process.env.SECRET_KEY || "phaze830630");
 
     res.status(200).json({ key: encodedKey, encrypted });
 }
