@@ -1,15 +1,16 @@
+import { saveKey } from "./data";
+
 export default function handler(req, res) {
     const { clientid } = req.query;
-
-    if (!clientid) {
-        return res.status(400).json({ error: "Missing clientid" });
-    }
+    if (!clientid) return res.status(400).json({ error: "Missing clientid" });
 
     const crypto = require("crypto");
     const key = crypto.randomBytes(16).toString("hex");
     const encrypted = xorEncrypt("whitelisted", process.env.SECRET_KEY || "phaze830630");
 
-    // In real deployment: store the key/clientid pair in a database
+    const now = Date.now();
+    saveKey(key, now);
+
     res.status(200).json({ key, encrypted });
 }
 
