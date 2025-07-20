@@ -22,7 +22,7 @@ export default function handler(req, res) {
     }
 
     const result = valid ? "whitelisted" : "notwhitelisted";
-    const encrypted = xorEncrypt(result, process.env.SECRET_KEY || "velocity2025");
+    const encrypted = xorEncrypt(result, process.env.SECRET_KEY || "phaze830630");
 
     res.status(200).json({ valid, encrypted });
 }
