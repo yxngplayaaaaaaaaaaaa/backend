@@ -1,39 +1,72 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://legiixnutpcnmleewqqj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUz...'; // your anon key
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k';
+
 const supabase = createClient(supabaseUrl, supabaseKey);
 
+function xorEncrypt(data, key) {
+  return Buffer.from(
+    data.split('').map((char, i) =>
+      String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+    ).join('')
+  ).toString('base64');
+}
+
 export default async function handler(req, res) {
-  console.log('✨ generate.js invoked');
   try {
-    const referer = req.headers.referer;
-    console.log('source referer:', referer);
-    if (!referer) throw new Error('No referer header');
+    const referer = req.headers.referer || "";
+    const allowedDomains = ["linkvertise.com", "link-target.net"];
+    const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
 
-    const isAuthorized = ['linkvertise.com', 'link-target.net']
-      .some(d => referer.includes(d));
-    console.log('authorized:', isAuthorized);
-    if (!isAuthorized) return res.status(403).send('Linkvertise step required');
+    if (!isAuthorized) {
+      return res.status(403).send(`
+        <html>
+          <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
+            <div style="text-align:center;">
+              <h1>Unauthorized Access</h1>
+              <p>You must complete the Linkvertise step before generating a key!</p>
+            </div>
+          </body>
+        </html>
+      `);
+    }
 
-    const clientid = req.query.clientid;
-    console.log('clientid:', clientid);
-    if (!clientid) return res.status(400).json({ error: 'Missing clientid' });
+    const { clientid } = req.query;
+    if (!clientid) {
+      return res.status(400).send("Missing clientid");
+    }
 
     const now = Date.now();
-    const raw = `${clientid}:${now}`;
-    const key = Buffer.from(raw).toString('base64');
-    console.log('generated key:', key);
+    const rawKey = `${clientid}:${now}`;
+    const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    const { error } = await supabase.from('keys').insert([{ key, created_at: now }]);
-    console.log('supabase insert error:', error);
-    if (error) return res.status(500).json({ error: 'DB insert failed' });
+    // Save to Supabase
+    const { error } = await supabase.from("keys").insert([
+      { key: encodedKey, created_at: now }
+    ]);
 
-    console.log('🔥 insert succeeded');
-    return res.status(200).json({ key });
+    if (error) {
+      console.error("Supabase insert error:", error.message);
+      return res.status(500).send("Database insert failed");
+    }
 
+    return res.status(200).send(`
+      <html>
+        <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
+          <div style="text-align: center;">
+            <h1>Your Key Is Ready!</h1>
+            <p style="font-size: 1.2em;">Copy and paste this into the executor:</p>
+            <div style="margin-top: 10px; background: #222; padding: 10px 20px; border: 1px solid #444; display: inline-block; font-size: 1.3em; user-select: all;">
+              ${encodedKey}
+            </div>
+            <p style="margin-top: 20px; color: #aaa;">This key is valid for 4 hours.</p>
+          </div>
+        </body>
+      </html>
+    `);
   } catch (e) {
-    console.error('❗ Unexpected error:', e.stack || e);
-    return res.status(500).json({ error: 'Server error' });
+    console.error("Unhandled error:", e.message || e);
+    return res.status(500).send("Server error");
   }
 }
