@@ -1,6 +1,6 @@
-import fs from 'fs';
-import path from 'path';
 import { Buffer } from 'buffer';
+
+const keys = {}; // In-memory store for now
 
 function xorEncrypt(data, key) {
     return Buffer.from(
@@ -37,14 +37,8 @@ export default function handler(req, res) {
     const rawKey = `${clientid}:${now}`;
     const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    // Save to keys.json
-    const filePath = path.resolve("./keys.json");
-    let keys = {};
-    if (fs.existsSync(filePath)) {
-        keys = JSON.parse(fs.readFileSync(filePath, "utf8"));
-    }
+    // ✅ Save to memory
     keys[encodedKey] = now;
-    fs.writeFileSync(filePath, JSON.stringify(keys, null, 2));
 
     const encrypted = xorEncrypt("whitelisted", "phaze830630");
 
