@@ -1,7 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { Buffer } from "buffer";
 
-// Supabase credentials
 const supabase = createClient(
   "https://legiixnutpcnmleewqqj.supabase.co",
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k"
@@ -34,23 +33,14 @@ export default async function handler(req, res) {
   }
 
   const { clientid } = req.query;
-  if (!clientid) {
-    return res.status(400).send("Missing clientid");
-  }
+  if (!clientid) return res.status(400).send("Missing clientid");
 
-  const now = Date.now();
-  const rawKey = `${clientid}:${now}`;
+  const timestamp = Date.now();
+  const rawKey = `${clientid}:${timestamp}`;
   const encodedKey = Buffer.from(rawKey).toString("base64");
 
-  // Save to Supabase
-  const { error } = await supabase.from("keys").insert([
-    { key: encodedKey, created: now }
-  ]);
-
-  if (error) {
-    console.error("Failed to save key to Supabase:", error);
-    return res.status(500).send("Internal server error (Supabase insert failed)");
-  }
+  // Save the key
+  await supabase.from("keys").insert([{ key: encodedKey, timestamp }]);
 
   return res.status(200).send(`
     <html>
