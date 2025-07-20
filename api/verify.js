@@ -6,7 +6,11 @@ const EXPIRATION_TIME_MS = 4 * 60 * 60 * 1000; // 4 hours
 
 function loadKeys() {
   if (!fs.existsSync(KEYS_FILE)) return {};
-  return JSON.parse(fs.readFileSync(KEYS_FILE, "utf8"));
+  try {
+    return JSON.parse(fs.readFileSync(KEYS_FILE, "utf8"));
+  } catch {
+    return {};
+  }
 }
 
 function saveKeys(keys) {
