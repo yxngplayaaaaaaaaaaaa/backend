@@ -1,3 +1,5 @@
+import { Buffer } from "buffer";
+
 function xorEncrypt(data, key) {
     return Buffer.from(
         data.split('').map((char, i) =>
@@ -12,26 +14,39 @@ export default function handler(req, res) {
 
     const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
     if (!isAuthorized) {
-        return res.status(403).send(\`
+        return res.status(403).send(`
             <html>
               <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
-                <div>
+                <div style="text-align:center;">
                   <h1>Unauthorized Access</h1>
                   <p>You must complete the Linkvertise step before generating a key!</p>
                 </div>
               </body>
             </html>
-        \`);
+        `);
     }
 
     const { clientid } = req.query;
-    if (!clientid) return res.status(400).json({ error: "Missing clientid" });
+    if (!clientid) {
+        return res.status(400).send("Missing clientid");
+    }
 
     const now = Date.now();
-    const rawKey = \`\${clientid}:\${now}\`;
+    const rawKey = `${clientid}:${now}`;
     const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    const encrypted = xorEncrypt("whitelisted", process.env.SECRET_KEY || "phaze830630");
-
-    return res.status(200).json({ key: encodedKey, encrypted });
+    return res.status(200).send(`
+        <html>
+          <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
+            <div style="text-align: center;">
+              <h1>Your Key Is Ready!</h1>
+              <p style="font-size: 1.2em;">Copy and paste this into the executor:</p>
+              <div style="margin-top: 10px; background: #222; padding: 10px 20px; border: 1px solid #444; display: inline-block; font-size: 1.3em; user-select: all;">
+                ${encodedKey}
+              </div>
+              <p style="margin-top: 20px; color: #aaa;">This key is valid for 4 hours!</p>
+            </div>
+          </body>
+        </html>
+    `);
 }
