@@ -53,7 +53,7 @@ export default function handler(req, res) {
           <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
             <div style="text-align: center;">
               <h1>Your Key Is Ready!</h1>
-              <p style="font-size: 1.2em;">Copy and paste this into the executor:</p>
+              <p style="font-size: 1.2em;">Copy and paste in Phaze:</p>
               <div style="margin-top: 10px; background: #222; padding: 10px 20px; border: 1px solid #444; display: inline-block; font-size: 1.3em; user-select: all;">
                 ${encodedKey}
               </div>
