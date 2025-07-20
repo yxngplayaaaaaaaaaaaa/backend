@@ -1,5 +1,14 @@
 import fs from 'fs';
 import path from 'path';
+import { Buffer } from 'buffer';
+
+function xorEncrypt(data, key) {
+    return Buffer.from(
+        data.split('').map((char, i) =>
+            String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+        ).join('')
+    ).toString('base64');
+}
 
 export default function handler(req, res) {
     const { key } = req.query;
@@ -21,16 +30,8 @@ export default function handler(req, res) {
         valid = true;
     }
 
-    const result = valid ? "whitelisted" : "notwhitelisted";
-    const encrypted = xorEncrypt(result, process.env.SECRET_KEY || "phaze830630");
+    const result = valid ? "whitelisted" : "denied";
+    const encrypted = xorEncrypt(result, "phaze830630");
 
     res.status(200).json({ valid, encrypted });
-}
-
-function xorEncrypt(data, key) {
-    return Buffer.from(
-        data.split('').map((char, i) =>
-            String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-        ).join('')
-    ).toString('base64');
 }
