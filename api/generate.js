@@ -3,7 +3,7 @@ import { Buffer } from "buffer";
 
 // Initialize Supabase
 const supabaseUrl = "https://legiixnutpcnmleewqqj.supabase.co";
-const supabaseKey = "YOUR_SUPABASE_ANON_KEY"; // Replace this with full anon key
+const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k"; // Replace this with full anon key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
