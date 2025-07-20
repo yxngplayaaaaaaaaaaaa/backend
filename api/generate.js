@@ -1,21 +1,34 @@
 import { Buffer } from "buffer";
+import fs from "fs";
+import path from "path";
+
+const KEYS_FILE = path.join(process.cwd(), "keys.json");
 
 function xorEncrypt(data, key) {
-    return Buffer.from(
-        data.split('').map((char, i) =>
-            String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
-        ).join('')
-    ).toString('base64');
+  return Buffer.from(
+    data.split("").map((char, i) =>
+      String.fromCharCode(char.charCodeAt(0) ^ key.charCodeAt(i % key.length))
+    ).join("")
+  ).toString("base64");
+}
+
+function saveKey(key, timestamp) {
+  let keys = {};
+  if (fs.existsSync(KEYS_FILE)) {
+    keys = JSON.parse(fs.readFileSync(KEYS_FILE, "utf8"));
+  }
+  keys[key] = timestamp;
+  fs.writeFileSync(KEYS_FILE, JSON.stringify(keys, null, 2));
 }
 
 export default function handler(req, res) {
-    const referer = req.headers.referer || "";
-    const allowedDomains = ["linkvertise.com", "link-target.net"];
+  const referer = req.headers.referer || "";
+  const allowedDomains = ["linkvertise.com", "link-target.net"];
+  const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
 
-    const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
-    if (!isAuthorized) {
-        return res.status(403).send(`
-            <html>
+  if (!isAuthorized) {
+    return res.status(403).send(`
+      <html>
               <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
                 <div style="text-align:center;">
                   <h1>Unauthorized Access</h1>
@@ -23,20 +36,20 @@ export default function handler(req, res) {
                 </div>
               </body>
             </html>
-        `);
-    }
+    `);
+  }
 
-    const { clientid } = req.query;
-    if (!clientid) {
-        return res.status(400).send("Missing clientid");
-    }
+  const { clientid } = req.query;
+  if (!clientid) return res.status(400).json({ error: "Missing clientid" });
 
-    const now = Date.now();
-    const rawKey = `${clientid}:${now}`;
-    const encodedKey = Buffer.from(rawKey).toString("base64");
+  const now = Date.now();
+  const rawKey = \`\${clientid}:\${now}\`;
+  const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    return res.status(200).send(`
-        <html>
+  saveKey(encodedKey, now);
+
+  return res.status(200).send(\`
+    <html>
           <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
             <div style="text-align: center;">
               <h1>Your Key Is Ready!</h1>
@@ -48,5 +61,5 @@ export default function handler(req, res) {
             </div>
           </body>
         </html>
-    `);
+  `);
 }
