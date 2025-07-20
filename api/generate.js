@@ -1,10 +1,18 @@
-export default function handler(req, res) {
+// ✅ /api/generate.js (uses Supabase to store keys)
+
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = 'https://legiixnutpcnmleewqqj.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k';
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+export default async function handler(req, res) {
   const referer = req.headers.referer || "";
   const allowedDomains = ["linkvertise.com", "link-target.net"];
-
   const isAuthorized = allowedDomains.some(domain => referer.includes(domain));
+
   if (!isAuthorized) {
-    return res.status(403).json({ error: "Unauthorized access. Complete Linkvertise to get a key." });
+    return res.status(403).send("You must complete Linkvertise.");
   }
 
   const { clientid } = req.query;
@@ -14,12 +22,7 @@ export default function handler(req, res) {
   const rawKey = `${clientid}:${now}`;
   const encodedKey = Buffer.from(rawKey).toString("base64");
 
-  // TEMPORARY key memory (not persistent)
-  global.generatedKeys = global.generatedKeys || {};
-  global.generatedKeys[encodedKey] = now;
+  await supabase.from("keys").insert([{ key: encodedKey, created_at: now }]);
 
-  res.status(200).json({
-    key: encodedKey,
-    message: "Key generated successfully"
-  });
+  return res.status(200).json({ key: encodedKey, message: "Key generated successfully" });
 }
