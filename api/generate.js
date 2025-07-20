@@ -3,7 +3,7 @@ import { Buffer } from "buffer";
 
 const supabase = createClient(
   "https://legiixnutpcnmleewqqj.supabase.co",
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k"
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxlZ2lpeG51dHBjbm1sZWV3cXFqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTMwNDI0ODAsImV4cCI6MjA2ODYxODQ4MH0.sE6VDWCoh5lpWDQNBxvOk-Jg9NyDkaWTQ02qb7m8k1k" // replace this
 );
 
 function xorEncrypt(data, key) {
@@ -39,8 +39,14 @@ export default async function handler(req, res) {
   const rawKey = `${clientid}:${timestamp}`;
   const encodedKey = Buffer.from(rawKey).toString("base64");
 
-  // Save the key
-  await supabase.from("keys").insert([{ key: encodedKey, timestamp }]);
+  const { error } = await supabase.from("keys").insert([
+    { key: encodedKey, timestamp }
+  ]);
+
+  if (error) {
+    console.error("Supabase Insert Error:", error.message);
+    return res.status(500).send("Internal server error (Supabase insert failed)");
+  }
 
   return res.status(200).send(`
     <html>
