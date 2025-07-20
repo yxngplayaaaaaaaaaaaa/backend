@@ -1,42 +1,39 @@
 import { createClient } from '@supabase/supabase-js';
 
 const supabaseUrl = 'https://legiixnutpcnmleewqqj.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+const supabaseKey = 'eyJhbGciOiJIUz...'; // your anon key
 const supabase = createClient(supabaseUrl, supabaseKey);
 
 export default async function handler(req, res) {
-  console.log('🚀 generate.js called');
+  console.log('✨ generate.js invoked');
   try {
-    const referer = req.headers.referer || '';
-    console.log('referer:', referer);
+    const referer = req.headers.referer;
+    console.log('source referer:', referer);
+    if (!referer) throw new Error('No referer header');
 
-    const isAuthorized = ['linkvertise.com','link-target.net']
-      .some(domain => referer.includes(domain));
+    const isAuthorized = ['linkvertise.com', 'link-target.net']
+      .some(d => referer.includes(d));
+    console.log('authorized:', isAuthorized);
+    if (!isAuthorized) return res.status(403).send('Linkvertise step required');
 
-    console.log('isAuthorized:', isAuthorized);
-    if (!isAuthorized) return res.status(403).send('Must complete Linkvertise.');
-
-    const { clientid } = req.query;
+    const clientid = req.query.clientid;
     console.log('clientid:', clientid);
     if (!clientid) return res.status(400).json({ error: 'Missing clientid' });
 
     const now = Date.now();
-    const rawKey = `${clientid}:${now}`;
-    const encodedKey = Buffer.from(rawKey).toString('base64');
-    console.log('encodedKey:', encodedKey);
+    const raw = `${clientid}:${now}`;
+    const key = Buffer.from(raw).toString('base64');
+    console.log('generated key:', key);
 
-    const sup = supabase.from('keys').insert([{ key: encodedKey, created_at: now }]);
-    console.log('insert result placeholder');
-    const { error } = await sup;
-    console.log('supabase error:', error);
-    if (error) {
-      console.error('Supabase insert error:', error);
-      return res.status(500).json({ error: 'Failed to save key' });
-    }
+    const { error } = await supabase.from('keys').insert([{ key, created_at: now }]);
+    console.log('supabase insert error:', error);
+    if (error) return res.status(500).json({ error: 'DB insert failed' });
 
-    res.status(200).json({ key: encodedKey, message: 'Key generated!' });
-  } catch (err) {
-    console.error('🛑 Uncaught error in generate.js:', err.stack || err);
+    console.log('🔥 insert succeeded');
+    return res.status(200).json({ key });
+
+  } catch (e) {
+    console.error('❗ Unexpected error:', e.stack || e);
     return res.status(500).json({ error: 'Server error' });
   }
 }
