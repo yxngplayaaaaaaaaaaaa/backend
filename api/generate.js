@@ -1,4 +1,6 @@
-import { Buffer } from "buffer";
+import fs from 'fs';
+import path from 'path';
+import { Buffer } from 'buffer';
 
 function xorEncrypt(data, key) {
     return Buffer.from(
@@ -35,8 +37,16 @@ export default function handler(req, res) {
     const rawKey = `${clientid}:${now}`;
     const encodedKey = Buffer.from(rawKey).toString("base64");
 
-    const secretKey = "phaze830630";
-    const encrypted = xorEncrypt("whitelisted", secretKey);
+    // Save to keys.json
+    const filePath = path.resolve("./keys.json");
+    let keys = {};
+    if (fs.existsSync(filePath)) {
+        keys = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    }
+    keys[encodedKey] = now;
+    fs.writeFileSync(filePath, JSON.stringify(keys, null, 2));
+
+    const encrypted = xorEncrypt("whitelisted", "phaze830630");
 
     return res.status(200).send(`
         <html>
@@ -47,7 +57,6 @@ export default function handler(req, res) {
               <div style="margin-top: 10px; background: #222; padding: 10px 20px; border: 1px solid #444; display: inline-block; font-size: 1.3em; user-select: all;">
                 ${encodedKey}
               </div>
-              <p style="margin-top: 10px; font-size: 1em; color: #666;">Encrypted: ${encrypted}</p>
               <p style="margin-top: 20px; color: #aaa;">This key is valid for 4 hours.</p>
             </div>
           </body>
