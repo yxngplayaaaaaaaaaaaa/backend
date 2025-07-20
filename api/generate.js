@@ -35,6 +35,9 @@ export default function handler(req, res) {
     const rawKey = `${clientid}:${now}`;
     const encodedKey = Buffer.from(rawKey).toString("base64");
 
+    const secretKey = "phaze830630";
+    const encrypted = xorEncrypt("whitelisted", secretKey);
+
     return res.status(200).send(`
         <html>
           <body style="font-family: sans-serif; background: #111; color: white; display: flex; justify-content: center; align-items: center; height: 100vh;">
@@ -44,6 +47,7 @@ export default function handler(req, res) {
               <div style="margin-top: 10px; background: #222; padding: 10px 20px; border: 1px solid #444; display: inline-block; font-size: 1.3em; user-select: all;">
                 ${encodedKey}
               </div>
+              <p style="margin-top: 10px; font-size: 1em; color: #666;">Encrypted: ${encrypted}</p>
               <p style="margin-top: 20px; color: #aaa;">This key is valid for 4 hours.</p>
             </div>
           </body>
